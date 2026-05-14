@@ -29,7 +29,7 @@ export const AppRouter = createBrowserRouter([
         element: <ProductPage />,
       },
       {
-        path: 'gender/gender',
+        path: 'gender/:gender',
         element: <GenderPage />,
       },
     ],
@@ -67,7 +67,7 @@ export const AppRouter = createBrowserRouter([
         element: <AdminProductsPage />,
       },
       {
-        path: 'product/:id',
+        path: 'products/:id',
         element: <AdminProductPage />,
       },
     ],
