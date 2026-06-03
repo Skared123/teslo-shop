@@ -2,7 +2,7 @@ import { AdminTitle } from '@/admin/components/AdminTitle';
 import { Button } from '@/components/ui/button';
 import type { Product, Size } from '@/interfaces/product.interface';
 import { X, SaveAll, Tag, Plus, Upload } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -14,17 +14,23 @@ interface Props {
   isPending: boolean;
 
   //Methods
-  onSubmit: (productLike: Partial<Product>) => Promise<void>;
+  onSubmit: (
+    productLike: Partial<Product> & { files?: File[] },
+  ) => Promise<void>;
 }
 
 const availableSizes: Size[] = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+interface FormInputs extends Product {
+  files?: File[];
+}
 
 export const AdminProductForm = ({
   title,
   subTitle,
   product,
   onSubmit,
-  isPending
+  isPending,
 }: Props) => {
   const [dragActive, setDragActive] = useState(false);
 
@@ -35,11 +41,17 @@ export const AdminProductForm = ({
     getValues,
     setValue,
     watch,
-  } = useForm({
+  } = useForm<FormInputs>({
     defaultValues: product,
   });
 
   const labelInputRef = useRef<HTMLInputElement>(null);
+
+  const [files, setFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    setFiles([]);
+  }, [product]);
 
   const selectedSizes = watch('sizes');
   const selectedTags = watch('tags');
@@ -91,12 +103,19 @@ export const AdminProductForm = ({
     e.stopPropagation();
     setDragActive(false);
     const files = e.dataTransfer.files;
-    console.log(files);
+    if (!files) return;
+    setFiles((prev) => [...prev, ...Array.from(files)]);
+    const currentFiles = getValues('files') || [];
+    setValue('files', [...currentFiles, ...Array.from(files)]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    console.log(files);
+    if (!files) return;
+
+    setFiles((prev) => [...prev, ...Array.from(files)]);
+    const currentFiles = getValues('files') || [];
+    setValue('files', [...currentFiles, ...Array.from(files)]);
   };
 
   return (
@@ -104,7 +123,7 @@ export const AdminProductForm = ({
       <div className="flex justify-between items-center">
         <AdminTitle title={title} subTitle={subTitle} />
         <div className="flex justify-end mb-10 gap-4">
-          <Button variant="outline" type="button" >
+          <Button variant="outline" type="button">
             <Link to="/admin/products" className="flex items-center gap-2">
               <X className="w-4 h-4" />
               Cancelar
@@ -322,10 +341,11 @@ export const AdminProductForm = ({
                       key={size}
                       onClick={() => addSize(size)}
                       disabled={getValues('sizes').includes(size)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${selectedSizes.includes(size)
-                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer'
-                        }`}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
+                        selectedSizes.includes(size)
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer'
+                      }`}
                     >
                       {size}
                     </button>
@@ -392,10 +412,11 @@ export const AdminProductForm = ({
 
               {/* Drag & Drop Zone */}
               <div
-                className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${dragActive
-                  ? 'border-blue-400 bg-blue-50'
-                  : 'border-slate-300 hover:border-slate-400'
-                  }`}
+                className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
+                  dragActive
+                    ? 'border-blue-400 bg-blue-50'
+                    : 'border-slate-300 hover:border-slate-400'
+                }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
@@ -449,6 +470,33 @@ export const AdminProductForm = ({
                   ))}
                 </div>
               </div>
+
+              {/* Imagenes por cargar */}
+              <div
+                className={cn('mt-6 space-y-3', {
+                  hidden: files.length === 0,
+                })}
+              >
+                <h3 className="text-sm font-medium text-slate-700">
+                  Imágenes por cargar
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {files.map((file, index) => (
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt="Product"
+                      key={index}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ))}
+
+                  {files.length === 0 && (
+                    <p className="text-red-500">
+                      No hay archivos seleccionados
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Product Status */}
@@ -472,12 +520,13 @@ export const AdminProductForm = ({
                     Inventario
                   </span>
                   <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${currentStock > 5
-                      ? 'bg-green-100 text-green-800'
-                      : currentStock > 0
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                      }`}
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      currentStock > 5
+                        ? 'bg-green-100 text-green-800'
+                        : currentStock > 0
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                    }`}
                   >
                     {currentStock > 5
                       ? 'En stock'
