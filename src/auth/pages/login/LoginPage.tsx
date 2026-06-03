@@ -18,7 +18,7 @@ export const LoginPage = ({
 
   const [isPosting, setIsPosting] = useState(false);
 
-  const handleLogin = async (event) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsPosting(true);
 

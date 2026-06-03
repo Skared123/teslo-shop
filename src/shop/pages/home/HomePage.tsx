@@ -12,7 +12,7 @@ export const HomePage = () => {
 
       <ProductsGrid products={data?.products || []} />
 
-      <CustomPagination totalPages={data?.pages} />
+      <CustomPagination totalPages={data?.pages ?? 1} />
     </>
   );
 };
